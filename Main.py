@@ -65,7 +65,7 @@ def SVM_K_folds(X,Y):
 
 def RandomForest(X,Y,valueTest_size):
     train_x,test_x,train_y,test_y = train_test_split(X,Y,test_size = valueTest_size)
-    rfc = RandomForestClassifier(n_estimators=100,criterion='gini')
+    rfc = RandomForestClassifier(n_estimators=10000,criterion='gini')
     rfc.fit(train_x,train_y)
     y_pred3 = rfc.predict(test_x)
     print("Accuracy Score of Random Forest Classifier : ", accuracy_score(y_pred3,test_y))
@@ -92,7 +92,7 @@ X,Y = Open_DataSet()
 # RandomForest(X,Y,0.25)
 # SVM(X,Y,0.25)
 # NaiveBayes_Simple(X,Y,0.25)
-# RandomForest_K_folds(X,Y,0.25)
+RandomForest_K_folds(X,Y)
 # SVM_K_folds(X,Y)
 # NaiveBayes_K_folds(X,Y)
 
