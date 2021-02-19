@@ -8,14 +8,12 @@ from sklearn.model_selection import train_test_split, StratifiedKFold, RepeatedS
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score, roc_curve
+from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score, roc_curve, precision_recall_curve, auc
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import StackingClassifier
 from scipy.stats import randint as sp_randint
-from numpy import mean
-from numpy import std
 
 
 def Open_DataSet():
@@ -357,13 +355,13 @@ def RandomForest_K_folds(X,Y):
     accuracy = metrics.accuracy_score(predGlobal, y_val_stringGlobal)
     print('Accuracy: %f' % accuracy)
     # precision tp / (tp + fp)
-    precision = metrics.precision_score(predGlobal, y_val_stringGlobal, average='macro')
+    precision = metrics.precision_score(predGlobal, y_val_stringGlobal, average='micro')
     print('Precision: %f' % precision)
     # recall: tp / (tp + fn)
-    recall = metrics.recall_score(predGlobal, y_val_stringGlobal, average='macro')
+    recall = metrics.recall_score(predGlobal, y_val_stringGlobal, average='micro')
     print('Recall: %f' % recall)
     # f1: 2 tp / (2 tp + fp + fn)
-    f1 = metrics.f1_score(predGlobal, y_val_stringGlobal, average='macro')
+    f1 = metrics.f1_score(predGlobal, y_val_stringGlobal, average='micro')
     print('F1 score: %f' % f1)
 
 
@@ -372,7 +370,6 @@ def RandomForest_K_folds(X,Y):
     plot_confusion_matrix(confusion_matrix(predGlobal,y_val_stringGlobal),Style,"Classificação Random Forest","Blues")
 
 def get_stacking():
-    # define the base models
     level0 = list()
     level0.append(('MNB', MultinomialNB(alpha=1)))
     level0.append(('RFC', RandomForestClassifier(n_estimators=100,criterion='gini')))
@@ -381,34 +378,79 @@ def get_stacking():
     model = StackingClassifier(estimators=level0, final_estimator=level1, cv=5)
     return model
 
-def evaluate_model(model, X, y):
-    cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
-    scores = cross_val_score(model, X, y, scoring='accuracy', cv=cv, error_score='raise')
-    return scores
+def evaluate_model(model, X, Y, name):
+    cv_scores = list()
+    roc_scores = list()
+    kf = StratifiedKFold(n_splits=10, shuffle=True, random_state=10)
+    kf.get_n_splits(X)
+
+    indexFolds = 1
+    y_val_stringGlobal = []
+    predGlobal = []
+    for train_index, test_index in kf.split(X,Y):
+        # print('-----------------------------------------------------------------')
+        # print('Fold ' + str(indexFolds))
+
+        X_train, X_val = X[train_index], X[test_index]
+        y_train, y_val = Y[train_index], Y[test_index]
+        model.fit(X_train,y_train)
+
+        y_test_pred  = model.predict(X_val)
+        y_test_prob = model.predict_proba(X_val)[:,1]
+
+        precision, recall, thresholds = precision_recall_curve(y_val, y_test_prob)
+        auc_precision_recall = auc(recall, precision)
+
+        plt.plot(recall, precision)
+        plt.show()
+
+        roc_scores.append(roc_auc_score(y_val, y_test_prob))
+        y_val_stringGlobal.extend(y_test_pred)
+        predGlobal.extend(y_val)
+
+        y_pred3 = model.predict(X_val)
+        cv_scores.append(metrics.f1_score(y_pred3,y_val))
+
+        indexFolds = indexFolds + 1
+
+    Style = ['Spam', 'Not Spam']
+    plot_confusion_matrix(confusion_matrix(predGlobal,y_val_stringGlobal),Style,"Classificação " + name,"Blues")
+
+    print("+"*50)
+    print(name)
+
+    accuracy = metrics.accuracy_score(predGlobal, y_val_stringGlobal)
+    print('Accuracy: %f' % accuracy)
+    # precision tp / (tp + fp)
+    precision = metrics.precision_score(predGlobal, y_val_stringGlobal, average='micro')
+    print('Precision: %f' % precision)
+    # recall: tp / (tp + fn)
+    recall = metrics.recall_score(predGlobal, y_val_stringGlobal, average='micro')
+    print('Recall: %f' % recall)
+    # f1: 2 tp / (2 tp + fp + fn)
+    f1 = metrics.f1_score(predGlobal, y_val_stringGlobal, average='micro')
+    print('F1 score: %f' % f1)
+
+    return cv_scores, roc_scores
 
 def get_models():
     models = dict()
     models['MNB'] = MultinomialNB(alpha=1)
     models['RFC'] = RandomForestClassifier(n_estimators=100,criterion='gini')
-    models['SVM'] = SVC(C=100,kernel='rbf',gamma=0.0001)
+    models['SVM'] = SVC(C=100,kernel='rbf',gamma=0.0001,probability=True)
     models['Stacking'] = get_stacking()
     return models
 
 def Stacking(X,Y):
     models = get_models()
-    results, names = list(), list()
+    resultsf1, names = list(), list()
     for name, model in models.items():
-        scores = evaluate_model(model, X, Y)
-        results.append(scores)
+        cv_scores,roc_scores = evaluate_model(model, X, Y, name)
+        resultsf1.append(cv_scores)
         names.append(name)
-        print('>%s %.3f (%.3f)' % (name, mean(scores), std(scores)))
 
-    pyplot.boxplot(results, labels=names, showmeans=True)
+    pyplot.boxplot(resultsf1, labels=names, showmeans=True)
     pyplot.show()
-
-
-
-
 
 def InformationDataSet(Y):
     Spam = 0
