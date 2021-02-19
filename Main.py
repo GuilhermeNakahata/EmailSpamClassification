@@ -5,6 +5,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_auc_score, roc_curve
+from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
 from sklearn.model_selection import RandomizedSearchCV
 from scipy.stats import randint as sp_randint
@@ -42,7 +43,8 @@ def NaiveBayes_K_folds(X,Y):
 
 def SVM(X,Y,valueTest_size):
     train_x,test_x,train_y,test_y = train_test_split(X,Y,test_size = valueTest_size)
-    svc = SVC(C=1.0,kernel='rbf',gamma='auto')
+    # svc = SVC(C=1.0,kernel='rbf',gamma='auto')
+    svc = SVC(C=100,kernel='rbf',gamma=0.0001)
     svc.fit(train_x,train_y)
     y_pred2 = svc.predict(test_x)
     print("Accuracy Score for SVC : ", accuracy_score(y_pred2,test_y))
@@ -89,6 +91,20 @@ def RandomizedSearch(X,Y):
 
     print(rsearch.best_params_)
 
+def GridSearch(X,Y):
+    tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
+                     'C': [1, 10, 100, 1000]},
+                    {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
+
+    clf = GridSearchCV(SVC(), tuned_parameters,
+                       scoring='roc_auc')
+
+    clf.fit(X, Y)
+
+    print("Best parameters set found on development set:")
+    print()
+    print(clf.best_params_)
+    print()
 
 def RandomForest(X,Y,valueTest_size):
     train_x,test_x,train_y,test_y = train_test_split(X,Y,test_size = valueTest_size)
@@ -131,9 +147,6 @@ def RandomForest(X,Y,valueTest_size):
     ax.set_ylabel("TPR")
     plt.show()
 
-
-
-
 def RandomForest_K_folds(X,Y):
     kf = StratifiedKFold(n_splits=10, shuffle=True, random_state=10)
     kf.get_n_splits(X)
@@ -153,9 +166,10 @@ def RandomForest_K_folds(X,Y):
     print('Estimated Accuracy %.3f (%.3f)' % (np.mean(cv_scores), np.std(cv_scores)))
 
 X,Y = Open_DataSet()
-RandomForest(X,Y,0.25)
+# GridSearch(X,Y)
+# RandomForest(X,Y,0.25)
 # RandomizedSearch(X,Y)
-# SVM(X,Y,0.25)
+SVM(X,Y,0.25)
 # NaiveBayes_Simple(X,Y,0.25)
 # RandomForest_K_folds(X,Y)
 # SVM_K_folds(X,Y)
