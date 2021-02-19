@@ -75,6 +75,8 @@ def NaiveBayes_K_folds(X,Y):
     kf.get_n_splits(X)
     cv_scores = list()
     indexFolds = 1
+    y_val_stringGlobal = []
+    predGlobal = []
     for train_index, test_index in kf.split(X,Y):
         print('-----------------------------------------------------------------')
         print('Fold ' + str(indexFolds))
@@ -82,11 +84,52 @@ def NaiveBayes_K_folds(X,Y):
         y_train, y_val = Y[train_index], Y[test_index]
         mnb = MultinomialNB(alpha=1)
         mnb.fit(X_train,y_train)
+
+        print("Train Results \n")
+        y_train_pred  = mnb.predict(X_train)
+        y_train_prob = mnb.predict_proba(X_train)[:,1]
+
+        print("Confusion Matrix for Train : \n", confusion_matrix(y_train, y_train_pred))
+        print("Accuracy Score for Train : ", accuracy_score(y_train, y_train_pred))
+        print("ROC AUC for Train : ", roc_auc_score(y_train, y_train_prob))
+
+        print("+"*50)
+        print("Test Results \n")
+        y_test_pred  = mnb.predict(X_val)
+        y_test_prob = mnb.predict_proba(X_val)[:,1]
+
+        print("Confusion Matrix for Test : \n", confusion_matrix(y_val, y_test_pred))
+        print("Accuracy Score for Test : ", accuracy_score(y_val, y_test_pred))
+        print("ROC AUC for Test : ", roc_auc_score(y_val, y_test_prob))
+
+        y_val_stringGlobal.extend(y_test_pred)
+        predGlobal.extend(y_val)
+
+
         y_pred1 = mnb.predict(X_val)
         print("Score: ", accuracy_score(y_pred1,y_val))
         cv_scores.append(accuracy_score(y_pred1,y_val))
         indexFolds = indexFolds + 1
+
     print('Estimated Accuracy %.3f (%.3f)' % (np.mean(cv_scores), np.std(cv_scores)))
+
+    accuracy = metrics.accuracy_score(predGlobal, y_val_stringGlobal)
+    print('Accuracy: %f' % accuracy)
+    # precision tp / (tp + fp)
+    precision = metrics.precision_score(predGlobal, y_val_stringGlobal, average='macro')
+    print('Precision: %f' % precision)
+    # recall: tp / (tp + fn)
+    recall = metrics.recall_score(predGlobal, y_val_stringGlobal, average='macro')
+    print('Recall: %f' % recall)
+    # f1: 2 tp / (2 tp + fp + fn)
+    f1 = metrics.f1_score(predGlobal, y_val_stringGlobal, average='macro')
+    print('F1 score: %f' % f1)
+
+
+    print("Confusion Matrix for Test : \n", confusion_matrix(predGlobal,y_val_stringGlobal))
+    Style = ['Spam', 'Not Spam']
+    plot_confusion_matrix(confusion_matrix(predGlobal,y_val_stringGlobal),Style,"Classificação Naive Bayes","Blues")
+
 
 def SVM(X,Y,valueTest_size):
     train_x,test_x,train_y,test_y = train_test_split(X,Y,test_size = valueTest_size)
@@ -101,19 +144,61 @@ def SVM_K_folds(X,Y):
     kf.get_n_splits(X)
     cv_scores = list()
     indexFolds = 1
+    y_val_stringGlobal = []
+    predGlobal = []
     for train_index, test_index in kf.split(X,Y):
         print('-----------------------------------------------------------------')
         print('Fold ' + str(indexFolds))
         X_train, X_val = X[train_index], X[test_index]
         y_train, y_val = Y[train_index], Y[test_index]
         # svc = SVC(C=1.0,kernel='rbf',gamma='auto')
-        svc = SVC(C=100,kernel='rbf',gamma=0.0001)
+        svc = SVC(C=100,kernel='rbf',gamma=0.0001,probability=True)
         svc.fit(X_train,y_train)
+
+        print("Train Results \n")
+        y_train_pred  = svc.predict(X_train)
+        y_train_prob = svc.predict_proba(X_train)[:,1]
+
+        print("Confusion Matrix for Train : \n", confusion_matrix(y_train, y_train_pred))
+        print("Accuracy Score for Train : ", accuracy_score(y_train, y_train_pred))
+        print("ROC AUC for Train : ", roc_auc_score(y_train, y_train_prob))
+
+        print("+"*50)
+        print("Test Results \n")
+        y_test_pred  = svc.predict(X_val)
+        y_test_prob = svc.predict_proba(X_val)[:,1]
+
+        print("Confusion Matrix for Test : \n", confusion_matrix(y_val, y_test_pred))
+        print("Accuracy Score for Test : ", accuracy_score(y_val, y_test_pred))
+        print("ROC AUC for Test : ", roc_auc_score(y_val, y_test_prob))
+
+        y_val_stringGlobal.extend(y_test_pred)
+        predGlobal.extend(y_val)
+
+
         y_pred2 = svc.predict(X_val)
         print("Score: ", accuracy_score(y_pred2,y_val))
         cv_scores.append(accuracy_score(y_pred2,y_val))
         indexFolds = indexFolds + 1
+
     print('Estimated Accuracy %.3f (%.3f)' % (np.mean(cv_scores), np.std(cv_scores)))
+
+    accuracy = metrics.accuracy_score(predGlobal, y_val_stringGlobal)
+    print('Accuracy: %f' % accuracy)
+    # precision tp / (tp + fp)
+    precision = metrics.precision_score(predGlobal, y_val_stringGlobal, average='macro')
+    print('Precision: %f' % precision)
+    # recall: tp / (tp + fn)
+    recall = metrics.recall_score(predGlobal, y_val_stringGlobal, average='macro')
+    print('Recall: %f' % recall)
+    # f1: 2 tp / (2 tp + fp + fn)
+    f1 = metrics.f1_score(predGlobal, y_val_stringGlobal, average='macro')
+    print('F1 score: %f' % f1)
+
+
+    print("Confusion Matrix for Test : \n", confusion_matrix(predGlobal,y_val_stringGlobal))
+    Style = ['Spam', 'Not Spam']
+    plot_confusion_matrix(confusion_matrix(predGlobal,y_val_stringGlobal),Style,"Classificação SVM","Blues")
 
 def RandomizedSearch(X,Y):
 
@@ -177,6 +262,7 @@ def RandomForest(X,Y,valueTest_size):
 
     print("Confusion Matrix for Train : \n", confusion_matrix(train_y, y_train_pred))
     print("Accuracy Score for Train : ", accuracy_score(train_y, y_train_pred))
+    print("ROC AUC for Test : ", roc_auc_score(train_y, y_train_prob))
 
     print("+"*50)
     print("Test Results \n")
@@ -199,7 +285,6 @@ def RandomForest(X,Y,valueTest_size):
     f1 = metrics.f1_score(test_y, y_test_pred, average='macro')
     print('F1 score: %f' % f1)
 
-    print("ROC AUC for Train : ", roc_auc_score(train_y, y_train_prob))
 
     y_pred3 = rfc.predict(test_x)
 
@@ -279,14 +364,30 @@ def RandomForest_K_folds(X,Y):
     Style = ['Spam', 'Not Spam']
     plot_confusion_matrix(confusion_matrix(predGlobal,y_val_stringGlobal),Style,"Classificação Random Forest","Blues")
 
+def Stacking(X,Y):
+    print("stacking")
+
+def InformationDataSet(Y):
+    Spam = 0
+    NaoSpam = 0
+    for x in Y:
+        if(x == 0):
+            NaoSpam = NaoSpam + 1
+        if(x == 1):
+            Spam = Spam + 1
+
+    print(Spam)
+    print(NaoSpam)
+
 
 X,Y = Open_DataSet()
+# InformationDataSet(Y)
 # GridSearch(X,Y)
 # RandomForest(X,Y,0.25)
 # RandomizedSearch(X,Y)
 # SVM(X,Y,0.25)
 # NaiveBayes_Simple(X,Y,0.25)
-RandomForest_K_folds(X,Y)
+# RandomForest_K_folds(X,Y)
 # SVM_K_folds(X,Y)
 # NaiveBayes_K_folds(X,Y)
-
+# Stacking(X,Y)
