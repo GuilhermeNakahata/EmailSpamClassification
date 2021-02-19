@@ -1,15 +1,22 @@
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split, StratifiedKFold
+import sklearn.metrics as metrics
+
+import matplotlib.pyplot as plt
+from matplotlib import pyplot
+from sklearn.model_selection import train_test_split, StratifiedKFold, RepeatedStratifiedKFold, cross_val_score
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_auc_score, roc_curve
+from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score, roc_curve
 from sklearn.model_selection import GridSearchCV
-import matplotlib.pyplot as plt
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import StackingClassifier
 from scipy.stats import randint as sp_randint
-import sklearn.metrics as metrics
+from numpy import mean
+from numpy import std
+
 
 def Open_DataSet():
     df = pd.read_csv("emails.csv")
@@ -364,8 +371,44 @@ def RandomForest_K_folds(X,Y):
     Style = ['Spam', 'Not Spam']
     plot_confusion_matrix(confusion_matrix(predGlobal,y_val_stringGlobal),Style,"Classificação Random Forest","Blues")
 
+def get_stacking():
+    # define the base models
+    level0 = list()
+    level0.append(('MNB', MultinomialNB(alpha=1)))
+    level0.append(('RFC', RandomForestClassifier(n_estimators=100,criterion='gini')))
+    level0.append(('SVM', SVC(C=100,kernel='rbf',gamma=0.0001)))
+    level1 = LogisticRegression()
+    model = StackingClassifier(estimators=level0, final_estimator=level1, cv=5)
+    return model
+
+def evaluate_model(model, X, y):
+    cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
+    scores = cross_val_score(model, X, y, scoring='accuracy', cv=cv, error_score='raise')
+    return scores
+
+def get_models():
+    models = dict()
+    models['MNB'] = MultinomialNB(alpha=1)
+    models['RFC'] = RandomForestClassifier(n_estimators=100,criterion='gini')
+    models['SVM'] = SVC(C=100,kernel='rbf',gamma=0.0001)
+    models['Stacking'] = get_stacking()
+    return models
+
 def Stacking(X,Y):
-    print("stacking")
+    models = get_models()
+    results, names = list(), list()
+    for name, model in models.items():
+        scores = evaluate_model(model, X, Y)
+        results.append(scores)
+        names.append(name)
+        print('>%s %.3f (%.3f)' % (name, mean(scores), std(scores)))
+
+    pyplot.boxplot(results, labels=names, showmeans=True)
+    pyplot.show()
+
+
+
+
 
 def InformationDataSet(Y):
     Spam = 0
@@ -390,4 +433,4 @@ X,Y = Open_DataSet()
 # RandomForest_K_folds(X,Y)
 # SVM_K_folds(X,Y)
 # NaiveBayes_K_folds(X,Y)
-# Stacking(X,Y)
+Stacking(X,Y)
