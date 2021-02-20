@@ -4,7 +4,6 @@ import sklearn.metrics as metrics
 
 import matplotlib.pyplot as plt
 from matplotlib import pyplot
-from numpy import interp
 from sklearn.model_selection import train_test_split, StratifiedKFold, RepeatedStratifiedKFold, cross_val_score
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
@@ -16,6 +15,9 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import StackingClassifier
 from scipy.stats import randint as sp_randint
+from imblearn.under_sampling import TomekLinks, RandomUnderSampler
+from imblearn.over_sampling import SMOTE
+from imblearn.pipeline import Pipeline
 
 
 def Open_DataSet():
@@ -429,12 +431,12 @@ def evaluate_model(model, X, Y, name):
 
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('ROC')
+    plt.title(name)
     plt.legend(loc="lower left")
     plt.show()
     plt.show()
 
-    Style = ['Spam', 'Not Spam']
+    Style = ['Not Spam', 'Spam']
     plot_confusion_matrix(confusion_matrix(predGlobal,y_val_stringGlobal),Style,"Classificação " + name,"Blues")
 
     print("+"*50)
@@ -482,12 +484,24 @@ def InformationDataSet(Y):
         if(x == 1):
             Spam = Spam + 1
 
-    print(Spam)
-    print(NaoSpam)
+    print("Spam:" + str(Spam))
+    print("Nao Spam:" + str(NaoSpam))
+
+def OverAndUnderSampling(X,Y):
+    over = SMOTE(sampling_strategy=0.5)
+    under = RandomUnderSampler(sampling_strategy=0.8)
+
+    steps = [('o', over), ('u', under)]
+    pipeline = Pipeline(steps=steps)
+
+    x, y = pipeline.fit_resample(X, Y)
+
+    return x,y
 
 
 X,Y = Open_DataSet()
 # InformationDataSet(Y)
+# X,Y = OverAndUnderSampling(X,Y)
 # GridSearch(X,Y)
 # RandomForest(X,Y,0.25)
 # RandomizedSearch(X,Y)
