@@ -393,73 +393,73 @@ def evaluate_model(model, X, Y, name):
                         cv=kf, n_jobs=4)
     plt.show()
 
-    # kf.get_n_splits(X)
-    # y_real = []
-    # y_proba = []
-    # indexFolds = 1
-    # y_val_stringGlobal = []
-    # predGlobal = []
-    # for train_index, test_index in kf.split(X,Y):
-    #     # print('-----------------------------------------------------------------')
-    #     # print('Fold ' + str(indexFolds))
-    #
-    #     X_train, X_val = X[train_index], X[test_index]
-    #     y_train, y_val = Y[train_index], Y[test_index]
-    #     model.fit(X_train,y_train)
-    #
-    #     y_test_pred  = model.predict(X_val)
-    #     y_test_prob = model.predict_proba(X_val)[:,1]
-    #
-    #     precision, recall, thresholds = precision_recall_curve(y_val, y_test_prob)
-    #     auc_precision_recall = auc(recall, precision)
-    #
-    #     plt.plot(recall, precision, lw=1, alpha=0.5, label='ROC fold %d (AUC = %0.2f)' % (indexFolds, auc_precision_recall))
-    #
-    #     y_real.append(y_val)
-    #     y_proba.append(y_test_prob)
-    #
-    #     roc_scores.append(roc_auc_score(y_val, y_test_prob))
-    #     y_val_stringGlobal.extend(y_test_pred)
-    #     predGlobal.extend(y_val)
-    #
-    #     y_pred3 = model.predict(X_val)
-    #     cv_scores.append(metrics.f1_score(y_pred3,y_val))
-    #
-    #     indexFolds = indexFolds + 1
-    #
-    # y_real = np.concatenate(y_real)
-    # y_proba = np.concatenate(y_proba)
-    #
-    # precision, recall, _ = precision_recall_curve(y_real, y_proba)
-    #
-    # plt.plot(recall, precision, color='b',
-    #          label=r'Precision-Recall (AUC = %0.2f)' % (average_precision_score(y_real, y_proba)),
-    #          lw=2, alpha=.8)
-    #
-    # plt.xlabel('False Positive Rate')
-    # plt.ylabel('True Positive Rate')
-    # plt.title(name)
-    # plt.legend(loc="lower left")
-    # plt.show()
-    # plt.show()
-    #
-    # Style = ['Not Spam', 'Spam']
-    # plot_confusion_matrix(confusion_matrix(predGlobal,y_val_stringGlobal),Style,"Classificação " + name,"Blues")
-    #
-    # print("+"*50)
-    # print(name)
-    #
-    # accuracy = metrics.accuracy_score(predGlobal, y_val_stringGlobal)
-    # print('Accuracy: %f' % accuracy)
-    # # precision tp / (tp + fp)
-    # precision = metrics.precision_score(predGlobal, y_val_stringGlobal, average='micro')
-    # print('Precision: %f' % precision)
-    # # recall: tp / (tp + fn)
-    # recall = metrics.recall_score(predGlobal, y_val_stringGlobal, average='micro')
-    # print('Recall: %f' % recall)
-    # # f1: 2 tp / (2 tp + fp + fn)
-    # f1 = metrics.f1_score(predGlobal, y_val_stringGlobal, average='micro')
-    # print('F1 score: %f' % f1)
+    kf.get_n_splits(X)
+    y_real = []
+    y_proba = []
+    indexFolds = 1
+    y_val_stringGlobal = []
+    predGlobal = []
+    for train_index, test_index in kf.split(X,Y):
+        # print('-----------------------------------------------------------------')
+        # print('Fold ' + str(indexFolds))
+
+        X_train, X_val = X[train_index], X[test_index]
+        y_train, y_val = Y[train_index], Y[test_index]
+        model.fit(X_train,y_train)
+
+        y_test_pred  = model.predict(X_val)
+        y_test_prob = model.predict_proba(X_val)[:,1]
+
+        precision, recall, thresholds = precision_recall_curve(y_val, y_test_prob)
+        auc_precision_recall = auc(recall, precision)
+
+        plt.plot(recall, precision, lw=1, alpha=0.5, label='ROC fold %d (AUC = %0.2f)' % (indexFolds, auc_precision_recall))
+
+        y_real.append(y_val)
+        y_proba.append(y_test_prob)
+
+        roc_scores.append(roc_auc_score(y_val, y_test_prob))
+        y_val_stringGlobal.extend(y_test_pred)
+        predGlobal.extend(y_val)
+
+        y_pred3 = model.predict(X_val)
+        cv_scores.append(metrics.f1_score(y_pred3,y_val))
+
+        indexFolds = indexFolds + 1
+
+    y_real = np.concatenate(y_real)
+    y_proba = np.concatenate(y_proba)
+
+    precision, recall, _ = precision_recall_curve(y_real, y_proba)
+
+    plt.plot(recall, precision, color='b',
+             label=r'Precision-Recall (AUC = %0.2f)' % (average_precision_score(y_real, y_proba)),
+             lw=2, alpha=.8)
+
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title(name)
+    plt.legend(loc="lower left")
+    plt.show()
+    plt.show()
+
+    Style = ['Not Spam', 'Spam']
+    plot_confusion_matrix(confusion_matrix(predGlobal,y_val_stringGlobal),Style,"Classificação " + name,"Blues")
+
+    print("+"*50)
+    print(name)
+
+    accuracy = metrics.accuracy_score(predGlobal, y_val_stringGlobal)
+    print('Accuracy: %f' % accuracy)
+    # precision tp / (tp + fp)
+    precision = metrics.precision_score(predGlobal, y_val_stringGlobal, average='micro')
+    print('Precision: %f' % precision)
+    # recall: tp / (tp + fn)
+    recall = metrics.recall_score(predGlobal, y_val_stringGlobal, average='micro')
+    print('Recall: %f' % recall)
+    # f1: 2 tp / (2 tp + fp + fn)
+    f1 = metrics.f1_score(predGlobal, y_val_stringGlobal, average='micro')
+    print('F1 score: %f' % f1)
 
     return cv_scores, roc_scores
 
