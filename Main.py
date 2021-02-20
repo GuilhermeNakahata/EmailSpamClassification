@@ -214,10 +214,6 @@ def RandomizedSearch(X,Y):
     rfc = RandomForestClassifier(random_state=4)
 
     params = {'n_estimators': sp_randint(50,400),
-              'max_features': sp_randint(2,16),
-              'max_depth': sp_randint(2,10),
-              'min_samples_split': sp_randint(2,25),
-              'min_samples_leaf': sp_randint(1,25),
               'criterion':['gini','entropy']}
 
     tuned_parameters = [{'n_estimators': [50,60,70,80,90,100,110,120,130,140],
@@ -459,7 +455,7 @@ def evaluate_model(model, X, Y, name):
 def get_models():
     models = dict()
     models['MNB'] = MultinomialNB(alpha=1)
-    models['RFC'] = RandomForestClassifier(n_estimators=100,criterion='gini')
+    models['RFC'] = RandomForestClassifier(n_estimators=339,criterion='gini')
     models['SVM'] = SVC(C=100,kernel='rbf',gamma=0.0001,probability=True)
     models['Stacking'] = get_stacking()
     return models
@@ -500,8 +496,10 @@ def OverAndUnderSampling(X,Y):
 
 
 X,Y = Open_DataSet()
+# RandomizedSearch(X,Y)
 # InformationDataSet(Y)
-# X,Y = OverAndUnderSampling(X,Y)
+X,Y = OverAndUnderSampling(X,Y)
+# InformationDataSet(Y)
 # GridSearch(X,Y)
 # RandomForest(X,Y,0.25)
 # RandomizedSearch(X,Y)
