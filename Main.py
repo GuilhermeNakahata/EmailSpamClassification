@@ -4,7 +4,8 @@ import sklearn.metrics as metrics
 
 import matplotlib.pyplot as plt
 from matplotlib import pyplot
-from sklearn.model_selection import train_test_split, StratifiedKFold, RepeatedStratifiedKFold, cross_val_score
+from sklearn.model_selection import train_test_split, StratifiedKFold, RepeatedStratifiedKFold, cross_val_score, \
+    ShuffleSplit
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
@@ -18,6 +19,8 @@ from scipy.stats import randint as sp_randint
 from imblearn.under_sampling import TomekLinks, RandomUnderSampler
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline
+from sklearn.model_selection import learning_curve
+from collections import Counter
 
 
 def Open_DataSet():
@@ -382,73 +385,81 @@ def evaluate_model(model, X, Y, name):
     cv_scores = list()
     roc_scores = list()
     kf = StratifiedKFold(n_splits=10, shuffle=True, random_state=10)
-    kf.get_n_splits(X)
-    y_real = []
-    y_proba = []
-    indexFolds = 1
-    y_val_stringGlobal = []
-    predGlobal = []
-    for train_index, test_index in kf.split(X,Y):
-        # print('-----------------------------------------------------------------')
-        # print('Fold ' + str(indexFolds))
+    # kf = ShuffleSplit(n_splits=10, test_size=0.2, random_state=10)
 
-        X_train, X_val = X[train_index], X[test_index]
-        y_train, y_val = Y[train_index], Y[test_index]
-        model.fit(X_train,y_train)
-
-        y_test_pred  = model.predict(X_val)
-        y_test_prob = model.predict_proba(X_val)[:,1]
-
-        precision, recall, thresholds = precision_recall_curve(y_val, y_test_prob)
-        auc_precision_recall = auc(recall, precision)
-
-        plt.plot(recall, precision, lw=1, alpha=0.5, label='ROC fold %d (AUC = %0.2f)' % (indexFolds, auc_precision_recall))
-
-        y_real.append(y_val)
-        y_proba.append(y_test_prob)
-
-        roc_scores.append(roc_auc_score(y_val, y_test_prob))
-        y_val_stringGlobal.extend(y_test_pred)
-        predGlobal.extend(y_val)
-
-        y_pred3 = model.predict(X_val)
-        cv_scores.append(metrics.f1_score(y_pred3,y_val))
-
-        indexFolds = indexFolds + 1
-
-    y_real = np.concatenate(y_real)
-    y_proba = np.concatenate(y_proba)
-
-    precision, recall, _ = precision_recall_curve(y_real, y_proba)
-
-    plt.plot(recall, precision, color='b',
-             label=r'Precision-Recall (AUC = %0.2f)' % (average_precision_score(y_real, y_proba)),
-             lw=2, alpha=.8)
-
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title(name)
-    plt.legend(loc="lower left")
-    plt.show()
+    title = "Learning Curves " + str(name)
+    estimator = model
+    plot_learning_curve(name, estimator, title, X, Y, ylim=(0.7, 1.01),
+                        cv=kf, n_jobs=4)
     plt.show()
 
-    Style = ['Not Spam', 'Spam']
-    plot_confusion_matrix(confusion_matrix(predGlobal,y_val_stringGlobal),Style,"Classificação " + name,"Blues")
-
-    print("+"*50)
-    print(name)
-
-    accuracy = metrics.accuracy_score(predGlobal, y_val_stringGlobal)
-    print('Accuracy: %f' % accuracy)
-    # precision tp / (tp + fp)
-    precision = metrics.precision_score(predGlobal, y_val_stringGlobal, average='micro')
-    print('Precision: %f' % precision)
-    # recall: tp / (tp + fn)
-    recall = metrics.recall_score(predGlobal, y_val_stringGlobal, average='micro')
-    print('Recall: %f' % recall)
-    # f1: 2 tp / (2 tp + fp + fn)
-    f1 = metrics.f1_score(predGlobal, y_val_stringGlobal, average='micro')
-    print('F1 score: %f' % f1)
+    # kf.get_n_splits(X)
+    # y_real = []
+    # y_proba = []
+    # indexFolds = 1
+    # y_val_stringGlobal = []
+    # predGlobal = []
+    # for train_index, test_index in kf.split(X,Y):
+    #     # print('-----------------------------------------------------------------')
+    #     # print('Fold ' + str(indexFolds))
+    #
+    #     X_train, X_val = X[train_index], X[test_index]
+    #     y_train, y_val = Y[train_index], Y[test_index]
+    #     model.fit(X_train,y_train)
+    #
+    #     y_test_pred  = model.predict(X_val)
+    #     y_test_prob = model.predict_proba(X_val)[:,1]
+    #
+    #     precision, recall, thresholds = precision_recall_curve(y_val, y_test_prob)
+    #     auc_precision_recall = auc(recall, precision)
+    #
+    #     plt.plot(recall, precision, lw=1, alpha=0.5, label='ROC fold %d (AUC = %0.2f)' % (indexFolds, auc_precision_recall))
+    #
+    #     y_real.append(y_val)
+    #     y_proba.append(y_test_prob)
+    #
+    #     roc_scores.append(roc_auc_score(y_val, y_test_prob))
+    #     y_val_stringGlobal.extend(y_test_pred)
+    #     predGlobal.extend(y_val)
+    #
+    #     y_pred3 = model.predict(X_val)
+    #     cv_scores.append(metrics.f1_score(y_pred3,y_val))
+    #
+    #     indexFolds = indexFolds + 1
+    #
+    # y_real = np.concatenate(y_real)
+    # y_proba = np.concatenate(y_proba)
+    #
+    # precision, recall, _ = precision_recall_curve(y_real, y_proba)
+    #
+    # plt.plot(recall, precision, color='b',
+    #          label=r'Precision-Recall (AUC = %0.2f)' % (average_precision_score(y_real, y_proba)),
+    #          lw=2, alpha=.8)
+    #
+    # plt.xlabel('False Positive Rate')
+    # plt.ylabel('True Positive Rate')
+    # plt.title(name)
+    # plt.legend(loc="lower left")
+    # plt.show()
+    # plt.show()
+    #
+    # Style = ['Not Spam', 'Spam']
+    # plot_confusion_matrix(confusion_matrix(predGlobal,y_val_stringGlobal),Style,"Classificação " + name,"Blues")
+    #
+    # print("+"*50)
+    # print(name)
+    #
+    # accuracy = metrics.accuracy_score(predGlobal, y_val_stringGlobal)
+    # print('Accuracy: %f' % accuracy)
+    # # precision tp / (tp + fp)
+    # precision = metrics.precision_score(predGlobal, y_val_stringGlobal, average='micro')
+    # print('Precision: %f' % precision)
+    # # recall: tp / (tp + fn)
+    # recall = metrics.recall_score(predGlobal, y_val_stringGlobal, average='micro')
+    # print('Recall: %f' % recall)
+    # # f1: 2 tp / (2 tp + fp + fn)
+    # f1 = metrics.f1_score(predGlobal, y_val_stringGlobal, average='micro')
+    # print('F1 score: %f' % f1)
 
     return cv_scores, roc_scores
 
@@ -494,6 +505,63 @@ def OverAndUnderSampling(X,Y):
 
     return x,y
 
+
+def plot_learning_curve(name, estimator, title, X, y, axes=None, ylim=None, cv=None,
+                        n_jobs=None, train_sizes=np.linspace(.1, 1.0, 5)):
+
+    if axes is None:
+        _, axes = plt.subplots(1, 3, figsize=(20, 5))
+
+    axes[0].set_title(title)
+    if ylim is not None:
+        axes[0].set_ylim(*ylim)
+    axes[0].set_xlabel("Training examples")
+    axes[0].set_ylabel("Score")
+
+    train_sizes, train_scores, test_scores, fit_times, _ = \
+        learning_curve(estimator, X, y, cv=cv,
+                       train_sizes=train_sizes,
+                       return_times=True)
+    train_scores_mean = np.mean(train_scores, axis=1)
+    train_scores_std = np.std(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+    test_scores_std = np.std(test_scores, axis=1)
+    fit_times_mean = np.mean(fit_times, axis=1)
+    fit_times_std = np.std(fit_times, axis=1)
+
+    # Plot learning curve
+    axes[0].grid()
+    axes[0].fill_between(train_sizes, train_scores_mean - train_scores_std,
+                         train_scores_mean + train_scores_std, alpha=0.1,
+                         color="r")
+    axes[0].fill_between(train_sizes, test_scores_mean - test_scores_std,
+                         test_scores_mean + test_scores_std, alpha=0.1,
+                         color="g")
+    axes[0].plot(train_sizes, train_scores_mean, 'o-', color="r",
+                 label="Training score")
+    axes[0].plot(train_sizes, test_scores_mean, 'o-', color="g",
+                 label="Cross-validation score")
+    axes[0].legend(loc="best")
+
+    # Plot n_samples vs fit_times
+    axes[1].grid()
+    axes[1].plot(train_sizes, fit_times_mean, 'o-')
+    axes[1].fill_between(train_sizes, fit_times_mean - fit_times_std,
+                         fit_times_mean + fit_times_std, alpha=0.1)
+    axes[1].set_xlabel("Training examples")
+    axes[1].set_ylabel("fit_times")
+    axes[1].set_title("Scalability of the model " + str(name))
+
+    # Plot fit_time vs score
+    axes[2].grid()
+    axes[2].plot(fit_times_mean, test_scores_mean, 'o-')
+    axes[2].fill_between(fit_times_mean, test_scores_mean - test_scores_std,
+                         test_scores_mean + test_scores_std, alpha=0.1)
+    axes[2].set_xlabel("fit_times")
+    axes[2].set_ylabel("Score")
+    axes[2].set_title("Performance of the model " + str(name))
+
+    return plt
 
 X,Y = Open_DataSet()
 # RandomizedSearch(X,Y)
