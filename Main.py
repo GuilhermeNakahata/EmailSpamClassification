@@ -413,7 +413,7 @@ def evaluate_model(model, X, Y, name):
         precision, recall, thresholds = precision_recall_curve(y_val, y_test_prob)
         auc_precision_recall = auc(recall, precision)
 
-        plt.plot(recall, precision, lw=1, alpha=0.5, label='ROC fold %d (AUC = %0.2f)' % (indexFolds, auc_precision_recall))
+        plt.plot(recall, precision, lw=1, alpha=0.5, label='PR fold %d (AUC = %0.2f)' % (indexFolds, auc_precision_recall))
 
         y_real.append(y_val)
         y_proba.append(y_test_prob)
@@ -436,8 +436,8 @@ def evaluate_model(model, X, Y, name):
              label=r'Precision-Recall (AUC = %0.2f)' % (average_precision_score(y_real, y_proba)),
              lw=2, alpha=.8)
 
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
     plt.title(name)
     plt.legend(loc="lower left")
     plt.show()
@@ -566,7 +566,7 @@ def plot_learning_curve(name, estimator, title, X, y, axes=None, ylim=None, cv=N
 X,Y = Open_DataSet()
 # RandomizedSearch(X,Y)
 # InformationDataSet(Y)
-X,Y = OverAndUnderSampling(X,Y)
+# X,Y = OverAndUnderSampling(X,Y)
 # InformationDataSet(Y)
 # GridSearch(X,Y)
 # RandomForest(X,Y,0.25)
