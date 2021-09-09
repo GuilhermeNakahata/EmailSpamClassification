@@ -12,7 +12,9 @@
 
 <h1 align="center">Email Spam Classification</h1>
 
-<p align="center"> Implementação de técnicas de aprendizado de máquina no problema de classificação de spam realizado durante a disciplina de mestrado, os resultados podem ser vistos [AQUI](./EmailSpamClassification.pdf).  </p>
+<p align="center"> Implementação de técnicas de aprendizado de máquina no problema de classificação de spam realizado durante a disciplina de mestrado.  </p>
+
+Os resultados podem ser vistos [AQUI](./EmailSpamClassification.pdf).
 
 ---
 
